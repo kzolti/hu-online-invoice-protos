@@ -1,0 +1,68 @@
+syntax = "proto3";
+package common;
+
+enum BusinessResultCodeType {
+  UNKNOWN = 0;
+  ERROR = 1;
+  INFO = 2;
+  WARN = 3;
+}
+
+message BasicHeaderType {
+  string request_id = 1;
+  string timestamp = 2;
+  string request_version = 3;
+  string header_version = 4;
+}
+
+message BasicRequestType {
+  BasicHeaderType header = 1;
+  UserHeaderType user = 2;
+}
+
+message BasicResponseType {
+  BasicHeaderType header = 1;
+  BasicResultType result = 2;
+}
+
+message NotificationType {
+  string notification_code = 1;
+  string notification_text = 2;
+}
+message BasicResultType {
+  enum FunctionCodeType {
+    UNKNOWN = 0;
+    ERROR = 1;
+    OK = 2;
+  }
+  FunctionCodeType func_code = 1;
+  string error_code = 2;
+  string message = 3;
+  NotificationType notifications = 4;
+}
+
+message GeneralErrorHeaderResponseType {
+  BasicHeaderType header = 1;
+  BasicResultType result = 2;
+}
+message NotificationsType { repeated NotificationType notification = 1; }
+
+message TechnicalValidationResultType {
+  enum TechnicalResultCodeType {
+    UNKNOWN = 0;
+    CRITICAL = 1;
+    ERROR = 2;
+  }
+  TechnicalResultCodeType validation_result_code = 1;
+  string validation_error_code = 2;
+  string message = 3;
+}
+
+message UserHeaderType {
+  string login = 1;
+  string password_hash = 2;
+  string tax_number = 3;
+  string request_signature = 4;
+}
+message GeneralErrorHeaderResponse { GeneralErrorHeaderResponseType base = 1; }
+message GeneralExceptionRespons { BasicResultType base = 1; }

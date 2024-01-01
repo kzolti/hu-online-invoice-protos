@@ -1,0 +1,882 @@
+syntax = "proto3";
+package invoice_data;
+import "invoice_base.proto";
+
+// A számlatétel módosítás típusa
+enum LineOperationType {
+  LINE_OPERATION_TYPE_UNKNOWN = 0;
+  CREATE = 1;
+  MODIFY = 2;
+}
+// Különbözet szerinti szabályozás típus
+enum MarginSchemeType {
+  MARGIN_SCHEME_TYPE_UNKNOWN = 0;
+  //   Utazási irodák
+  TRAVEL_AGENCY = 1;
+  //   Használt cikkek
+  SECOND_HAND = 2;
+  //   Műalkotások
+  ARTWORK = 3;
+  //   Gyűjteménydarabok és régiségek
+  ANTIQUES = 4;
+}
+// Díjtétel egység típus
+enum ProductFeeMeasuringUnitType {
+  PRODUCT_FEE_MEASURING_UNIT_TYPE_UNKNOWN = 0;
+  DARAB = 1; // Darab
+  KG = 2;    // Kilogramm
+}
+// Termékdíj összesítés típus
+enum ProductFeeOperationType {
+  PRODUCT_FEE_OPERATION_TYPE_UNKNOWN = 0;
+  // Visszaigénylés
+  REFUND = 2;
+  //   Raktárba szállítás
+  DEPOSIT = 1;
+}
+// Termékáram típus
+enum ProductStreamType {
+  PRODUCT_STREAM_TYPE_UNKNOWN = 0;
+  // Akkumulátor
+  BATTERY = 1;
+  //   Csomagolószer
+  PACKAGING = 2;
+  //   Egyéb kőolajtermék
+  OTHER_PETROL = 3;
+  //   Az elektromos, elektronikai berendezés
+  ELECTRONIC = 4;
+  //   Gumiabroncs
+  TIRE = 5;
+  //   Reklámhordozó papír
+  COMMERCIAL = 6;
+  //   Az egyéb műanyag termék
+  PLASTIC = 7;
+  //   Az egyéb műanyag termék
+  OTHER_CHEMICAL = 8;
+  //   Irodai papír
+  PAPER = 9;
+}
+// Az átvállalás adatait tartalmazó típus
+enum TakeoverType {
+  TAKEOVER_TYPE__UNKNOWN = 0;
+  //   A 2011. évi LXXXV. tv. 14. § (4) bekezdés szerint az eladó (első belföldi
+  //   forgalomba hozó) vállalja át a vevő termékdíj-kötelezettségét
+  TAKEOVER_TYPE__01 = 1;
+  //   A 2011. évi LXXXV. tv. 14. § (5) aa) alpontja szerint a vevő szerződés
+  //   alapján átvállalja az eladó termékdíj-kötelezettségét
+  TAKEOVER_TYPE__02_aa = 2;
+  TAKEOVER_TYPE__02_ab = 3;
+  TAKEOVER_TYPE__02_b = 4;
+  TAKEOVER_TYPE__02_c = 5;
+  TAKEOVER_TYPE__02_d = 6;
+  TAKEOVER_TYPE__02_ea = 7;
+  TAKEOVER_TYPE__02_eb = 8;
+  TAKEOVER_TYPE__02_fa = 9;
+  TAKEOVER_TYPE__02_fb = 10;
+  TAKEOVER_TYPE__02_ga = 11;
+  TAKEOVER_TYPE__02_gb = 12;
+}
+
+enum UnitOfMeasureType {
+  UNIT_OF_MEASURE_TYPE_UNKNOWN = 0;
+  PIECE = 1;         // Darab
+  KILOGRAM = 2;      // Kilogramm
+  TON = 3;           // Metrikus tonna
+  KWH = 4;           // Kilowatt óra
+  DAY = 5;           // Nap
+  HOUR = 6;          // Óra
+  MINUTE = 7;        // Perc
+  MONTH = 8;         // Hónap
+  LITER = 9;         // Liter
+  KILOMETER = 10;    // Kilométer
+  CUBIC_METER = 11;  // Köbméter
+  METER = 12;        // Méter
+  LINEAR_METER = 13; // Folyóméter
+  CARTON = 14;       // Karton
+  PACK = 15;         // Csomag
+  OWN = 16;          // Saját mennyiségi egység megnevezés
+}
+// További adat leírására szolgáló típus
+message AdditionalDataType {
+  // Az adatmező egyedi azonosítója
+  //  <xs:minLength value="1"/>
+  //	<xs:maxLength value="255"/>
+  //	<xs:pattern value="[A-Z][0-9]{5}[_][_A-Z0-9]{1,249}"/>
+  string data_name = 1;
+  // Az adatmező tartalmának szöveges leírása max size:255
+  string data_description = 2;
+  string data_value = 3; // Az adat értéke max size:512
+}
+// Előleghez kapcsolódó adatok
+message AdvanceDataType {
+  // Értéke true, ha a számla tétel előleg jellegű
+  bool advance_indicator = 1;
+  // Előleg fizetéshez kapcsolódó adatok
+  AdvancePaymentDataType advance_dayment_data = 2;
+}
+// Előlegfizetéshez kapcsolódó adatok
+message AdvancePaymentDataType {
+  // Az előlegszámlának a sorszáma, amelyben az előlegfizetés történt
+  string advance_original_invoice = 1;
+  //   Az előleg fizetésének dátuma
+  int32 advance_payment_date = 2;
+  //   Az előlegfizetés során alkalmazott árfolyam
+  double advance_exchange_rate = 3;
+}
+message AggregateInvoiceLineDataType {
+  // A tételhez tartozó árfolyam, 1 (egy) egységre vonatkoztatva. Csak
+  // külföldi pénznemben kiállított gyűjtő számla esetén kitöltendő
+  double line_exchange_rate = 1;
+  // Gyűjtőszámla esetén az adott tétel teljesítési dátuma
+  string line_delivery_date = 2;
+}
+// Légi közlekedési eszköz
+message AircraftType {
+  double take_off_weight = 1;
+  bool air_cargo = 2;
+  double operation_hours = 3;
+}
+// Kötegelt módosító okirat adatai
+message BatchInvoiceType {
+  int32 batch_index = 1;
+  InvoiceType invoice = 2;
+}
+//   Szerződésszámok
+message ContractNumbersType {
+  // Szerződésszám
+  repeated string contract_number = 1;
+}
+// A számlafeldolgozást segítő, egyezményesen nevesített egyéb adatok
+message ConventionalInvoiceInfoType {
+  // Megrendelésszám(ok)
+  OrderNumbersType order_numbers = 1;
+  //   Szállítólevél szám(ok)
+  DeliveryNotesType delivery_notes = 2;
+  //   Szállítási dátum(ok)
+  ShippingDatesType shipping_dates = 3;
+  //   Szerződésszám(ok)
+  ContractNumbersType contract_numbers = 4;
+  //   Az eladó vállalati kódja(i)
+  SupplierCompanyCodesType supplier_company_codes = 5;
+  //   A vevő vállalati kódja(i)
+  CustomerCompanyCodesType customer_company_codes = 6;
+  //   Beszállító kód(ok)
+  DealerCodesType dealer_odes = 7;
+  //   Költséghely(ek)
+  CostCentersType cost_centers = 8;
+  //   Projektszám(ok)
+  ProjectNumbersType project_numbers = 9;
+  //   Főkönyvi számlaszám(ok)
+  GeneralLedgerAccountNumbersType general_ledger_account_numbers = 10;
+  //   Kiállítói globális helyazonosító szám(ok)
+  GlnNumbersType gln_numbers_supplier = 11;
+  //   Vevői globális helyazonosító szám(ok)
+  GlnNumbersType gln_numbers_customer = 12;
+  //   Anyagszám(ok)
+  MaterialNumbersType material_numbers = 13;
+  //   Cikkszám(ok)
+  ItemNumbersType item_numbers = 14;
+  //   EKÁER azonosító(k)
+  EkaerIdsType ekaer_ids = 15;
+}
+// Költséghelyek
+message CostCentersType {
+  // Költséghely
+  repeated string cost_center = 1;
+}
+// A vevő vállalati kódjai
+message CustomerCompanyCodesType { repeated string customer_company_code = 1; }
+// Ha az eladó a vevő nyilatkozata alapján mentesül a termékdíj megfizetése
+// alól, akkor az érintett termékáram
+message CustomerDeclarationType {
+  // Termékáram
+  ProductStreamType product_stream = 2;
+  //   Termékdíj köteles termék tömege kilogrammban
+  double product_fee_weight = 1;
+}
+// A vevő adatai
+message CustomerInfoType {
+  // Vevő ÁFA szerinti státusz típusa
+  enum CustomerVatStatusType {
+    CUSTOMER_VAT_STATUS_TYPE_UNKNOWN = 0;
+    // Belföldi ÁFA alany
+    DOMESTIC = 1;
+    // Egyéb (belföldi nem ÁFA alany, nem természetes személy, külföldi ÁFA
+    // alany és külföldi nem ÁFA alany, nem természetes személy)
+    OTHER = 2;
+    //   Nem ÁFA alany (belföldi vagy külföldi) természetes személy
+    PRIVATE_PERSON = 3;
+  }
+  // Vevő ÁFA szerinti státusza
+  CustomerVatStatusType customer_vat_status = 1;
+  // A vevő ÁFA alanyisági adatai
+  CustomerVatDataType customer_vat_data = 2;
+  string customer_name = 5;                      // A vevő neve
+  invoice_base.AddressType customer_address = 6; // A vevő címe
+  string customer_bank_account_number = 7;       // Vevő bankszámlaszáma
+}
+// Adószám, amely alatt a számlán szereplő termékbeszerzés vagy szolgáltatás
+// igénybevétele történt. Lehet csoportazonosító szám is
+message CustomerTaxNumberType {
+  invoice_base.TaxNumberType root = 1;
+  //   Csoport tag adószáma, ha a termékbeszerzés vagy szolgáltatás
+  //   igénybevétele csoportazonosító szám alatt történt
+  invoice_base.TaxNumberType group_member_tax_number = 2;
+}
+// A vevő ÁFA alanyisági adatai
+message CustomerVatDataType {
+  // A vevő ÁFA alanyisági adatai
+  CustomerTaxNumberType customer_tax_number = 1;
+  string community_vat_number = 2;
+  string third_state_taxid = 3;
+}
+// Beszállító kódok
+message DealerCodesType {
+  // Beszállító kód
+  repeated string dealer_code = 1;
+}
+// Szállítólevél számok
+message DeliveryNotesType {
+  // Szállítólevél szám
+  repeated string delivery_note = 1;
+}
+// Mentesség, kivétel részletes indokolása
+message DetailedReasonType {
+  // Az eset leírása kóddal
+  string case = 1;
+  //   Az eset leírása szöveggel
+  string reason = 2;
+}
+// Gázolaj adózottan történő beszerzésének adatai – 45/2016 (XI. 29.) NGM
+// rendelet 75. § (1) a)
+message DieselOilPurchaseType {
+  // Gázolaj beszerzés helye
+  invoice_base.SimpleAddressType purchase_location = 1;
+  //   Gázolaj beszerzés dátuma
+  string purchase_date = 2;
+  //   Kereskedelmi jármű forgalmi rendszáma (csak betűk és számok)
+  string vehicle_registration_number = 3;
+  //   Gépi bérmunka-szolgáltatás során felhasznált gázolaj mennyisége literben
+  //   – Jöt. 117. § (2)
+  double diesel_oil_quantity = 4;
+}
+// Árengedmény adatok
+message DiscountDataType {
+  // Az árengedmény leírása
+  // data:SimpleText255NotBlankType
+  string discount_description = 1;
+  // Tételhez tartozó árengedmény összege a számla pénznemében, ha az
+  // egységár nem tartalmazza
+  //<xs:simpleType name="MonetaryType">
+  // Pénzérték típus. Maximum 18 számjegy, ami 2 tizedesjegyet
+  // tartalmazhat
+  double discount_value = 2;
+  // Tételhez tartozó árengedmény aránya, ha az egységár nem tartalmazza
+  // data:RateType Arány megadására szolgáló típus. 0 és 1
+  // közötti szám, legfeljebb 4 tizedesjegy pontossággal
+  float discount_rate = 3;
+}
+// EKÁER azonosító(k)
+message EkaerIdsType {
+  // EKÁER azonosító
+  repeated string ekaer_id = 1;
+}
+// A pénzügyi képviselő adatai
+message FiscalRepresentativeType {
+  // A pénzügyi képviselő adószáma
+  invoice_base.TaxNumberType fiscal_representative_tax_number = 1;
+  // A pénzügyi képviselő neve
+  string fiscal_representative_name = 2;
+  // Pénzügyi képviselő címe
+  invoice_base.AddressType fiscal_representative_address = 3;
+  // Pénzügyi képviselő által a számla kibocsátó (eladó) számára
+  // megnyitott bankszámla bankszámlaszáma
+  string fiscal_representative_bank_account_number = 4;
+}
+// Főkönyvi számlaszámok
+message GeneralLedgerAccountNumbersType {
+  // Főkönyvi számlaszám
+  repeated string general_ledger_account_number = 1;
+}
+// Globális helyazonosító számok
+message GlnNumbersType {
+  // Globális helyazonosító szám
+  repeated string gln_number = 1;
+}
+// Számla részletező adatok
+message InvoiceDetailType {
+  //   enum InvoiceCategoryType {
+  //     UNKOWN_INVOICE_CATEGORY_TYPE = 0;
+  //     NORMAL = 1;     // Normál (nem egyszerűsített és nem gyűjtő) számla
+  //     SIMPLIFIED = 2; // Egyszerűsített számla
+  //     AGGREGATE = 3;  // Gyűjtőszámla
+  //   }
+  //   enum PaymentMethod {
+  //     UNKOWN_PAYMENT_METHOD = 0;
+  //     TRANSFER = 1; // Banki átutalás
+  //     CASH = 2;     // Készpénz
+  //     CARD = 3;     // Bankkártya, hitelkártya, egyéb készpénz helyettesítő
+  //                   // eszköz
+  //     VOUCHER = 4;  // Utalvány, váltó, egyéb pénzhelyettesítő eszköz
+  //     OTHER = 5;    // Egyéb
+  //   }
+  //   enum InvoiceAppearanceType {
+  //     UNKNOWN_INVOICE_APPEARANCE_TYPE = 0;
+  //     PAPER = 1;      // Papír alapú számla
+  //     ELECTRONIC = 2; // Elektronikus formában előállított, nem EDI számla
+  //     EDI = 3;        // EDI számla
+  //     // A szoftver nem képes azonosítani vagy a kiállításkor nem ismert
+  //     UNKNOWN = 4;
+  //   }
+
+  // A számla típusa, módosító okirat esetén az eredeti számla típusa
+  invoice_base.InvoiceCategoryType invoice_category = 1;
+  // Teljesítés dátuma (ha nem szerepel a számlán, akkor azonos a számla
+  // keltével) - ÁFA tv. 169. § g)
+  string invoice_delivery_date = 2;
+  // Amennyiben a számla egy időszakra vonatkozik, akkor az időszak első
+  // napja
+  string invoice_delivery_period_start = 3;
+  // Amennyiben a számla egy időszakra vonatkozik, akkor az időszak
+  // utolsó napja
+  string invoice_delivery_period_end = 4;
+  // Számviteli teljesítés dátuma. Időszak esetén az időszak utolsó
+  // napja
+  string invoice_accounting_delivery_date = 5;
+  // Annak jelzése, ha a felek a termékértékesítés, szolgáltatás nyújtás
+  // során időszakonkénti elszámolásban vagy fizetésben állapodnak meg,
+  // vagy a termékértékesítés, szolgáltatás nyújtás ellenértékét
+  // meghatározott időpontra állapítják meg.
+  bool periodical_settlement = 6;
+  //   Kisadózó jelzése
+  bool small_business_indicator = 7;
+  // A számla pénzneme az ISO 4217 szabvány szerint
+  string currency_code = 8;
+  // HUF-tól különböző pénznem esetén az alkalmazott árfolyam: egy
+  // egység értéke HUF-ban
+  //<xs:totalDigits value="14"/>
+  //<xs:fractionDigits value="6"/>
+  //<xs:minExclusive value="0"/>
+  double exchange_rate = 9;
+  //   Közmű elszámoló számla jelölése (2013.évi CLXXXVIII törvény szerinti
+  //   elszámoló számla)
+  bool utility_settlement_indicator = 10;
+  // Önszámlázás jelölése (önszámlázás esetén true)
+  bool self_billing_indicator = 11;
+  //   Fizetés módja
+  invoice_base.PaymentMethodType payment_method = 12;
+  // Fizetési határidő
+  string payment_date = 13;
+  // Pénzforgalmi elszámolás jelölése, ha az szerepel a számlán - ÁFA
+  // tv. 169. § h). Értéke true pénzforgalmi elszámolás esetén
+  bool cash_accounting_indicator = 14;
+  //   Pénzforgalmi elszámolás jelölése, ha az szerepel a számlán - ÁFA tv. 169.
+  //   § h). Értéke true pénzforgalmi elszámolás esetén
+  invoice_base.InvoiceAppearanceType invoice_appearance = 15;
+  //   A számlafeldolgozást segítő, egyezményesen nevesített egyéb adatok
+  ConventionalInvoiceInfoType conventional_invoice_info = 16;
+  // A számlára vonatkozó egyéb adat
+  repeated AdditionalDataType additional_invoice_data = 17;
+}
+
+// A számla adatszolgáltatás adatai
+message InvoiceDataType {
+  // Számla vagy módosító okirat sorszáma - ÁFA tv. 169. § b) vagy 170. § (1)
+  // bek. b) pont
+  string invoice_number = 1;
+  //   Számla vagy módosító okirat kelte - ÁFA tv. 169. § a), ÁFA tv. 170. § (1)
+  //   bek. a)
+  string invoice_issue_date = 2;
+  //   Jelöli, ha az adatszolgáltatás maga a számla (a számlán nem szerepel több
+  //   adat)
+  bool completeness_indicator = 3;
+  //   Számlaadatok leírására szolgáló közös típus
+  InvoiceMainType invoice_main = 4;
+}
+// Számla fejléc adatai
+message InvoiceHeadType {
+  // Számla kibocsátó (eladó) adatai
+  SupplierInfoType supplier_info = 1;
+  // Vevő adatai
+  CustomerInfoType customer_info = 2;
+  // Az eladó (szállító) bankszámlaszáma
+  FiscalRepresentativeType fiscal_representative_info = 3;
+  // Számla részletező adatok
+  InvoiceDetailType invoice_detail = 4;
+}
+// Számlaadatok leírására szolgáló közös típus
+message InvoiceMainType {
+  // Egy számla vagy módosító okirat adatai
+  InvoiceType invoice = 1;
+  //   Kötegelt módosító okirat adatai
+  repeated BatchInvoiceType batch_invoice = 2;
+}
+// A módosítás vagy érvénytelenítés hivatkozási adatai
+message InvoiceReferenceType {
+  // Az eredeti számla sorszáma, melyre a módosítás vonatkozik  - ÁFA tv. 170. §
+  // (1) c)
+  string original_invoice_number = 1;
+  // Annak jelzése, hogy a módosítás olyan alapszámlára hivatkozik, amelyről nem
+  // történt és nem is fog történni adatszolgáltatás
+  bool modify_without_master = 2;
+  //   A számlára vonatkozó módosító okirat egyedi sorszáma
+  int32 modification_index = 3;
+}
+// Egy számla vagy módosító okirat adatai
+message InvoiceType {
+  // A módosítás vagy érvénytelenítés adatai
+  InvoiceReferenceType invoice_reference = 1;
+  // A számla egészét jellemző adatok
+  InvoiceHeadType invoice_head = 2;
+  // A számlán szereplő tételek adatai
+  LinesType invoice_lines = 3;
+  // Termékdíjjal kapcsolatos összesítő adatok
+  string product_fee_summary = 4;
+  // Az ÁFA törvény szerinti összesítő adatok
+  SummaryType invoice_summary = 5;
+}
+// Cikkszámok
+message ItemNumbersType {
+  // Cikkszám
+  repeated string item_number = 1;
+}
+// Normál vagy gyűjtő számla esetén kitöltendő tétel érték adatok
+message LineAmountsNormalType {
+  // Tétel nettó adatok
+  LineNetAmountDataType line_net_amount_data = 1;
+  // Adómérték vagy adómentesség jelölése
+  VatRateType line_vat_rate = 2;
+  // Tétel ÁFA adatok
+  LineVatDataType line_vat_data = 3;
+  // Tétel bruttó adatok
+  LineGrossAmountDataType line_gross_amount_data = 4;
+}
+// Egyszerűsített számla esetén kitöltendő tétel érték adatok
+message LineAmountsSimplifiedType {
+  // Adómérték vagy adómentesség jelölése
+  VatRateType line_vat_rate = 1;
+  // Tétel bruttó értéke a számla pénznemében
+  double line_gross_amount_simplified = 2;
+  //   Tétel bruttó értéke forintban
+  double line_gross_amount_simplified_h_u_f = 3;
+}
+// Tétel bruttó adatok
+message LineGrossAmountDataType {
+  // Tétel bruttó értéke a számla pénznemében. ÁFA tartalmú
+  // különbözeti adózás esetén az ellenérték.
+  double line_gross_amount_normal = 1;
+  // Tétel bruttó értéke forintban
+  double line_gross_amount_normal_h_u_f = 2;
+}
+// Módosításról történő adatszolgáltatás esetén a tételsor módosítás jellegének
+// jelölése
+message LineModificationReferenceType {
+  // Az eredeti számla módosítással érintett tételének sorszáma (lineNumber). Új
+  // tétel létrehozása esetén az új tétel sorszáma, a meglévő tételsorok
+  // számozásának folytatásaként
+  int32 line_number_reference = 1;
+  //   A számlatétel módosításának jellege
+  LineOperationType line_operation = 2;
+}
+// Tétel nettó adatok
+message LineNetAmountDataType {
+  double line_net_amount = 1;
+  double line_net_amount_h_u_f = 2;
+}
+// Termék/szolgáltatás tételek
+message LinesType {
+  // Jelöli, ha az adatszolgáltatás méretcsökkentés miatt összevont soradatokat
+  // tartalmaz  /*10MB fölötti body esetén használható*/
+  bool merged_item_indicator = 1;
+  // Termék/szolgáltatás tétel
+  repeated LineType line = 2;
+}
+// A számla tételek (termék vagy szolgáltatás) adatait tartalmazó típus
+message LineType {
+  // Adott tételsor termékértékesítés vagy szolgáltatás nyújtás jellegének
+  // jelzése
+  enum LineNatureIndicatorType {
+    LINENATURE_INDICATOR_TYPE_UNKNOWN = 0;
+    //   Termékértékesítés
+    PRODUCT = 1;
+    // Szolgáltatás nyújtás
+    SERVICE = 2;
+    // Egyéb, nem besorolható
+    OTHER = 3;
+  }
+  //   A tétel sorszáma
+  int32 line_number = 1;
+  //    Módosításról történő adatszolgáltatás esetén a tételsor
+  //    módosítás jellegének jelölése
+  LineModificationReferenceType line_modification_reference = 2;
+  // Hivatkozások kapcsolódó tételekre, ha ez az ÁFA törvény alapján
+  // szükséges
+  ReferencesToOtherLinesType references_to_other_lines = 3;
+  //   Előleghez kapcsolódó adatok
+  AdvanceDataType advance_data = 4;
+  // Termékkódok
+  repeated ProductCodeType product_codes = 5;
+  //Értéke true, ha a tétel mennyiségi egysége természetes
+  // mértékegységben
+  // kifejezhető
+  bool line_expression_indicator = 6;
+  // Adott tételsor termékértékesítés vagy szolgáltatás nyújtás
+  // jellegének jelzése
+  LineNatureIndicatorType line_nature_indicator = 7;
+  // A termék vagy szolgáltatás megnevezése
+  // data:SimpleText512NotBlankType
+  string line_description = 8;
+  // Mennyiség    data:QuantityType
+  //<xs:totalDigits value="22"/>
+  //<xs:fractionDigits value="10"/>
+  double quantity = 9;
+  // A számlán szereplő mennyiségi egység kanonikus kifejezése az
+  // interfész specifikáció szerint
+  UnitOfMeasureType unit_of_measure = 10;
+  // A számlán szereplő mennyiségi egység literális kifejezése
+  string unit_of_measure_own = 11;
+  // Egységár a számla pénznemében. Egyszerűsített számla esetén bruttó,
+  // egyéb esetben nettó egységár
+  double unit_price = 12;
+  // Egységár forintban
+  double unit_price_h_u_f = 13;
+  // A tételhez tartozó árengedmény adatok
+  DiscountDataType line_discount_data = 14;
+  // Normál (nem egyszerűsített) számla esetén (beleértve a
+  // gyűjtőszámlát) kitöltendő tétel érték adatok.
+  LineAmountsNormalType line_amounts_normal = 15; // xs:choice
+  // Egyszerűsített számla esetén kitöltendő tétel érték adatok
+  LineAmountsSimplifiedType line_amounts_simplified = 16; // xs::choice
+  //Értéke true ha a tétel közvetített szolgáltatás - Számviteli tv. 3.§
+  //(4)
+  // 1
+  bool intermediated_service = 17;
+  // Gyűjtő számla adatok
+  AggregateInvoiceLineDataType aggregate_invoice_line_data = 18;
+  // Új közlekedési eszköz értékesítés ÁFA tv. 89 § ill. 169 § o)
+  NewTransportMeanType new_transport_mean = 19;
+  // Értéke true, ha a tétel betétdíj jellegű
+  bool deposit_indicator = 20;
+  //   Értéke true ha a tételt termékdíj fizetési kötelezettség terheli
+  bool obligated_for_product_fee = 21;
+  // Különbözet szerinti szabályozás jelölése - ÁFA tv. 169. § p) q)
+  // Földgáz, villamos energia, szén jövedéki adója forintban - Jöt.
+  // 118. § (2)
+  double _g_p_c_excise = 22;
+  //   Gázolaj adózottan történő beszerzésének adatai – 45/2016 (XI. 29.) NGM
+  //   rendelet 75. § (1) a)
+  DieselOilPurchaseType diesel_oil_purchase = 23;
+  //Értéke true, ha a Neta tv-ben meghatározott adókötelezettség az adó
+  // alanyát terheli. 2011. évi CIII. tv. 3.§(2)
+  bool neta_declaration = 24;
+  // A környezetvédelmi termékdíjról szóló 2011. évi LXXXV. tv.
+  // szerinti, tételre vonatkozó záradékok
+  ProductFeeClauseType product_fee_clause = 25;
+  //   A tétel termékdíj tartalmára vonatkozó adatok
+  ProductFeeDataType line_product_fee_content = 26;
+  //   A számlafeldolgozást segítő, egyezményesen nevesített egyéb
+  //   adatok</xs:documentation>
+  ConventionalInvoiceInfoType conventional_line_info = 27;
+  //   A termék/szolgáltatás tételhez kapcsolódó, további adat
+  repeated AdditionalDataType additional_line_data = 28;
+}
+// Tétel ÁFA adatok
+message LineVatDataType {
+  // Tétel ÁFA összege a számla pénznemében
+  double line_vat_amount = 1;
+  // Tétel ÁFA összege forintban
+  double line_vat_amount_h_u_f = 2;
+}
+// Anyagszámok
+message MaterialNumbersType {
+  // Anyagszám
+  repeated string material_number = 1;
+}
+// Új közlekedési eszköz értékesítés ÁFA tv. 89 § ill. 169 § o)
+message NewTransportMeanType {
+  // Gyártmány/típus
+  string brand = 1;
+  // Alvázszám/gyári szám/Gyártási szám
+  string serial_num = 2;
+  // Motorszám
+  string engine_num = 3;
+  // Első forgalomba helyezés időpontja
+  int32 first_entry_into_service = 4;
+  // Szárazföldi közlekedési eszköz további adatai
+  VehicleType vehicle = 5;
+  // Vízi jármű adatai
+  VesselType vessel = 6;
+  // Légi közlekedési eszköz
+  AircraftType aircraft = 7;
+}
+//   Megrendelésszámok
+message OrderNumbersType {
+  // Megrendelésszám
+  repeated string order_number = 1;
+}
+// A termékdíj bevallását igazoló dokumentum adatai a 2011. évi LXXXV. tv. 13. §
+// (3) szerint és a 25. § (3) szerint
+message PaymentEvidenceDocumentDataType {
+  // Számla sorszáma vagy egyéb okirat azonosító száma
+  string evidence_document_no = 1;
+  // Számla kelte
+  int32 evidence_document_date = 2;
+  // Kötelezett neve
+  string obligated_name = 3;
+  // Kötelezett címe
+  invoice_base.AddressType obligated_address = 4;
+  // A kötelezett adószáma
+  invoice_base.TaxNumberType obligated_tax_number = 5;
+}
+// Termékkódok
+message ProductCodesType {
+  // Termékkód
+  repeated ProductCodeType product_code = 1;
+}
+message ProductCodeType {
+  // A termékkód fajtájának jelölésére szolgáló típus
+  enum ProductCodeCategoryType {
+    PRODUCT_CODE_CATEGORY_TYPE_UNKNOWN = 0;
+    //   Vámtarifa szám VTSZ
+    VTSZ = 1;
+    //   Szolgáltatás jegyzék szám SZJ
+    SZJ = 2;
+    //   KN kód (Kombinált Nómenklatúra, 2658/87/EGK rendelet I. melléklete)
+    KN = 3;
+    //   A Jövedéki törvény (2016. évi LXVIII. tv) szerinti e-TKO adminisztratív
+    //   hivatkozási kódja AHK
+    AHK = 4;
+    //   A termék 343/2011. (XII. 29) Korm. rendelet 1. sz. melléklet A) cím
+    //   szerinti csomagolószer-katalógus kódja (CsK kód)
+    CSK = 5;
+    //   A termék 343/2011. (XII. 29) Korm. rendelet 1. sz. melléklet B) cím
+    //   szerinti környezetvédelmi termékkódja (Kt kód)
+    KT = 6;
+    //   Építményjegyzék szám
+    EJ = 7;
+    //   A Termékek és Szolgáltatások Osztályozási Rendszere (TESZOR) szerinti
+    //   termékkód - 451/2008/EK rendelet
+    TESZOR = 8;
+    //   A vállalkozás által képzett termékkód
+    OWN = 9;
+    //   Egyéb termékkód
+    OTHER = 10;
+  }
+  ProductCodeCategoryType product_code_category = 1;
+  string product_code_value = 2;
+  string product_code_own_value = 3;
+}
+
+// A környezetvédelmi termékdíjról szóló 2011. évi LXXXV. tv. szerinti, tételre
+// vonatkozó záradékok
+message ProductFeeClauseType {
+  // A környezetvédelmi termékdíj kötelezettség átvállalásával kapcsolatos
+  // adatok</xs:documentation>
+  ProductFeeTakeoverDataType product_fee_takeover_data = 1;
+  //   Ha az eladó a vevő nyilatkozata alapján mentesül a termékdíj megfizetése
+  //   alól, akkor az érintett termékáram
+  CustomerDeclarationType customer_declaration = 2;
+}
+// Termékdíj adatok
+message ProductFeeDataType {
+  // Termékdíj kód (Kt vagy Csk)
+  ProductCodeType product_fee_code = 1;
+  //   A termékdíjjal érintett termék mennyisége
+  double product_fee_quantity = 2;
+  //   A díjtétel egysége (kg vagy darab)
+  ProductFeeMeasuringUnitType product_fee_measuring_unit = 3;
+  //   A termékdíj díjtétele (HUF/egység)
+  double product_fee_rate = 4;
+  //   Termékdíj összege forintban
+  double product_fee_amount = 5;
+}
+// Termékdíj összegzés adatok
+message ProductFeeSummaryType {
+  // Annak jelzése, hogy a termékdíj összesítés visszaigénylésre (REFUND) vagy
+  // raktárba történő beszállításra (DEPOSIT) vonatkozik
+  ProductFeeOperationType product_fee_operation = 1;
+  //   Termékdíj adatok
+  repeated ProductFeeDataType product_fee_data = 2;
+  //   Termékdíj összesen
+  double product_charge_sum = 3;
+  //   A termékdíj bevallását igazoló dokumentum adatai a 2011. évi LXXXV.
+  //   tv. 13. § (3) szerint és a 25. § (3) szerint
+  PaymentEvidenceDocumentDataType payment_evidence_document_data = 4;
+}
+// A környezetvédelmi termékdíj kötelezettség átvállalásával kapcsolatos adatok
+message ProductFeeTakeoverDataType {
+  // Az átvállalás iránya és jogszabályi alapja
+  TakeoverType takeover_reason = 1;
+  //   Az átvállalt termékdíj összege forintban, ha a vevő vállalja át az eladó
+  //   termékdíj-kötelezettségét
+  double takeover_amount = 2;
+}
+// Projektszámok
+message ProjectNumbersType {
+  // Projektszám
+  repeated string project_number = 1;
+}
+// Hivatkozások kapcsolódó tételekre, ha ez az ÁFA törvény alapján szükséges
+message ReferencesToOtherLinesType {
+  // Hivatkozások kapcsolódó tételekre, ha ez az ÁFA törvény alapján szükséges
+  repeated int32 reference_to_other_line = 1;
+}
+// Szállítási dátumok
+message ShippingDatesType {
+  // Szállítási dátum
+  repeated string shipping_date = 1;
+}
+// ÁFA mértékek szerinti összesítés
+message SummaryByVatRateType {
+  // Adómérték vagy adómentesség jelölése
+  VatRateType vat_rate = 1;
+  // Adott adómértékhez tartozó nettó adatok
+  VatRateNetDataType vat_rate_net_data = 2;
+  // Adott adómértékhez tartozó ÁFA adatok
+  VatRateVatDataType vat_rate_vat_data = 3;
+  // Adott adómértékhez tartozó bruttó adatok
+  VatRateGrossDataType vat_rate_gross_data = 4;
+}
+// A számla összesítő bruttó adatai
+message SummaryGrossDataType {
+  // A számla bruttó összege a számla pénznemében
+  double invoice_gross_amount = 1;
+  // A számla bruttó összege forintban
+  double invoice_gross_amount_h_u_f = 2;
+}
+// Számla összesítés (nem egyszerűsített számla esetén)
+message SummaryNormalType {
+  // Összesítés ÁFA-mérték szerint
+  repeated SummaryByVatRateType summary_by_vat_rate = 1;
+  // A számla nettó összege a számla pénznemében
+  double invoice_net_amount = 2;
+  // A számla nettó összege forintban
+  double invoice_net_amount_h_u_f = 3;
+  // A számla ÁFA összege a számla pénznemében
+  double invoice_vat_amount = 4;
+  // A számla ÁFA összege forintban
+  double invoice_vat_amount_h_u_f = 5;
+}
+// Egyszerűsített számla összesítés
+message SummarySimplifiedType {
+  // Adómérték vagy adómentesség jelölése
+  VatRateType vat_rate = 1;
+  //   Az adott adótartalomhoz tartozó értékesítés vagy szolgáltatásnyújtás
+  //   bruttó összege a számla pénznemében
+  double vat_content_gross_amount = 2;
+  //   Az adott adótartalomhoz tartozó értékesítés vagy szolgáltatásnyújtás
+  //   bruttó összege forintban
+  double vat_content_gross_amount_h_u_f = 3;
+}
+// Számla összesítés adatai
+message SummaryType {
+  // Számla összesítés (nem egyszerűsített számla esetén)
+  SummaryNormalType summary_normal = 1; // xs::choice
+  // Egyszerűsített számla összesítés
+  repeated SummarySimplifiedType summary_simplified = 2; // xs:choice
+  // A számla összesítő bruttó adatai
+  SummaryGrossDataType summary_gross_data = 3;
+}
+// Az eladó vállalati kódjai
+message SupplierCompanyCodesType {
+  // Az eladó vállalati kódja
+  repeated string supplier_company_code = 1;
+}
+// A szállító (eladó) adatai
+message SupplierInfoType {
+  // Belföldi adószám, amely alatt a számlán szereplő termékértékesítés
+  // vagy szolgáltatás nyújtás történt. Lehet csoportazonosító szám is
+  invoice_base.TaxNumberType supplier_tax_number = 1;
+  //   Csoport tag adószáma, ha a termékbeszerzés vagy szolgáltatás
+  //   nyújtása csoportazonosító szám alatt történt
+  invoice_base.TaxNumberType group_member_tax_number = 2;
+  //   Közösségi adószám
+  string community_vat_number = 3;
+  // Az eladó (szállító) neve
+  string supplier_name = 4;
+  //   Az eladó (szállító) címe
+  invoice_base.AddressType supplier_address = 5;
+  // Az eladó (szállító) bankszámlaszáma
+  string supplier_bank_account_number = 6;
+  // Értéke true, amennyiben az eladó (szállító) alanyi ÁFA mentes
+  bool individual_exemption = 7;
+  // Az eladó adóraktári engedélyének vagy jövedéki engedélyének száma
+  // (2016. évi LXVIII. tv.)
+  string excise_licence_num = 8;
+}
+// Adómérték, adótartalom
+message VatAmountMismatchType {
+  // Adómérték, adótartalom
+  double vat_rate = 2;
+  //   Az eset leírása kóddal
+  string case = 1;
+}
+// Adott adómértékhez tartozó bruttó adatok
+message VatRateGrossDataType {
+  // Az adott adómértékhez tartozó értékesítés vagy
+  // szolgáltatásnyújtás bruttó összege a számla pénznemében
+  double vat_rate_gross_amount = 1;
+  // Az adott adómértékhez tartozó értékesítés vagy
+  // szolgáltatásnyújtás bruttó összege forintban
+  double vat_rate_gross_amount_h_u_f = 2;
+}
+// Adott adómértékhez tartozó nettó adatok
+message VatRateNetDataType {
+  // Az adott adómértékhez tartozó értékesítés vagy
+  // szolgáltatásnyújtás nettó összege a számla pénznemében
+  double vat_rate_net_amount = 1;
+  // Az adott adómértékhez tartozó értékesítés vagy
+  // szolgáltatásnyújtás nettó összege forintban
+  double vat_rate_net_amount_h_u_f = 2;
+}
+
+message VatRateType {
+  // az alkalmazott adó mértéke - ÁFA tv. 169. § j)
+  float vat_percentage = 1; // {"choice":{"defaultValueToString":"0"}}
+  // ÁFA tartalom egyszerűsített számla esetén
+  double vat_content = 2;  // {"choice":{"defaultValueToString":"0.00"}}
+  // Az adómentesség jelölése - ÁFA tv. 169. § m)
+  DetailedReasonType vat_exemption = 3; // {"choice":{"defaultValueToString":""}}
+  // Az ÁFA törvény hatályán kívüli
+  DetailedReasonType vat_out_of_scope = 4; // {"choice":{"defaultValueToString":""}}
+  // A belföldi fordított adózás jelölése - ÁFA tv. 142. §
+  bool vat_domestic_reverse_charge =
+      5; // {"choice":{"defaultValueToString":"false"}}
+  // Különbözet szerinti szabályozás jelölése - ÁFA tv. 169. § p) q)s
+  MarginSchemeType margin_scheme_indicator = 6;
+  // Adóalap és felszámított adó eltérésének esetei
+  VatAmountMismatchType vat_amount_mismatch = 7;
+  // Nincs felszámított áfa a 17. § alapján
+  bool no_vat_charge = 8; // {"choice":{"defaultValueToString":"false"}}
+}
+// Adott adómértékhez tartozó ÁFA adatok
+message VatRateVatDataType {
+  // Az adott adómértékhez tartozó értékesítés vagy szolgáltatásnyújtás ÁFA
+  // összege a számla pénznemében
+  double vat_rate_vat_amount = 1;
+  //   Az adott adómértékhez tartozó értékesítés vagy szolgáltatásnyújtás ÁFA
+  //   összege forintban
+  double vat_rate_vat_amount_h_u_f = 2;
+}
+// Szárazföldi közlekedési eszköz további adatai
+message VehicleType {
+  // Hengerűrtartalom köbcentiméterben
+  double engine_capacity = 1;
+  //   Teljesítmény kW-ban
+  double engine_power = 2;
+  //   Futott kilométerek száma
+  double kms = 3;
+}
+// Vízi jármű adatai
+message VesselType {
+  // Hajó hossza méterben
+  double length = 1;
+  //   Értéke true, ha a jármű az ÁFA tv. 259.§ 25. b) szerinti kivétel alá
+  //   tartozik
+  bool activity_referred = 2;
+  //   Hajózott órák száma
+  double sailed_hours = 3;
+}
+// XML root element, számla vagy módosítás adatait leíró típus, amelyet BASE64
+// kódoltan tartalmaz az invoiceApi sémaleíró invoiceData elementje
+message InvoiceData { InvoiceDataType root = 1; }

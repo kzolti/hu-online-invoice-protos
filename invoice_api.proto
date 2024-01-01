@@ -1,0 +1,756 @@
+syntax = "proto3";
+package invoice_api;
+
+import "common.proto";
+import "invoice_base.proto";
+
+// Technikai érvénytelenítő kérések jóváhagyási státusza
+enum AnnulmentVerificationStatusType {
+  UNKNOWN_AnnulmentVerificationStatusType = 0;
+  // A technikai érvénytelenítés kliens hiba miatt nem hagyható jóvá
+  NOT_VERIFIABLE = 1;
+  // A technikai érvénytelenítés jóváhagyásra vár
+  VERIFICATION_PENDING = 2;
+  // A technikai érvénytelenítés jóváhagyásra került
+  VERIFICATION_DONE = 3;
+  // A technikai érvénytelenítés elutasításra került
+  VERIFICATION_REJECTED = 4;
+}
+// Gazdasági típus
+enum IncorporationType {
+  UNKNOWN_IncorporationType = 0;
+  // Gazdasági társaság
+  ORGANIZATION = 1;
+  // Egyéni vállalkozó
+  SELF_EMPLOYED = 2;
+  // Adószámos magánszemély
+  TAXABLE_PERSON = 3;
+}
+// Kimenő vagy bejövő számla keresési paramétere
+enum InvoiceDirectionType {
+  UNKNOWN_INVOICE_DIRECTION_TYPE = 0;
+  // Bejövő (vevő oldali) számla keresési paramétere
+  INBOUND = 1;
+  // Kimenő (kiállító oldali) számla keresési paramétere
+  OUTBOUND = 2;
+}
+
+// Technikai érvénytelenítés műveleti típus
+enum ManageAnnulmentOperationType {
+  UNKNOWN_MANAGE_ANNULMENT_OPERATION_TYPE = 0;
+  // Korábbi adatszolgáltatás technikai érvénytelenítése
+  ANNUL = 1;
+}
+// Számlaművelet típus
+enum ManageInvoiceOperationType {
+  UNKNOWN_MANAGE_INVOICE_OPERATION_TYPE = 0;
+  CREATE = 1;
+  MODIFY = 2;
+  STORNO = 3;
+}
+// enum OriginalRequestVersionType {
+//   OriginalRequestVersionType_1_0 = 1;
+//   OriginalRequestVersionType_1_1 = 2;
+//   OriginalRequestVersionType_2_0 = 3;
+//   OriginalRequestVersionType_3_0 = 4;
+// }
+enum QueryOperatorType {
+  UNKNOWN_QUERY_OPERATOR_TYPE = 0;
+  EQ = 1;  // Egyenlőség
+  GT = 2;  // Nagyobb mint reláció
+  GTE = 3; // Nagyobb vagy egyenlő reláció
+  LT = 4;  // Kisebb mint reláció
+  LTE = 5; // Kisebb vagy egyenlő reláció
+}
+enum RequestStatusType {
+  UNKNOWN_REQUEST_STATUS_TYPE = 0;
+  RECEIVED = 1;
+  PROCESSING = 2;
+  SAVED = 3;
+  FINISHED = 4;
+  NOTIFIED = 5;
+}
+enum SoftwareOperationType {
+  UNKNOWN_SOFTWARE_OPERATION_TYPE = 0;
+  LOCAL_SOFTWARE = 1;
+  ONLINE_SERVICE = 2;
+}
+enum SourceType {
+  UNKNOWN_SOURCE_TYPE = 0;
+  WEB = 1; // Webes adatszolgáltatás
+  XML = 2; // Kézi XML feltöltés
+  MGM = 3; // Gép-gép adatkapcsolati adatszolgáltatás
+  OPG = 4; // Online pénztárgépes adatszolgáltatás
+  OSZ = 5; // NAV online számlázó
+}
+enum TaxpayerAddressTypeType {
+  UNKNOWN = 0;
+  //   Székhely
+  HQ = 1;
+  //   Telephely
+  SITE = 2;
+  //   Fióktelep
+  BRANCH = 3;
+}
+//   A számla lekérdezés kiegészítő paraméterei
+message AdditionalQueryParamsType {
+  // A számla kiállítójának vagy vevőjének adószáma (a keresési feltétel az
+  // invoiceDirection tag értékétől függ)
+  string tax_number = 1;
+  // A számla kiállítójának vagy vevőjének csoport tag adószáma (a keresési
+  // feltétel az invoiceDirection tag értékétől függ)
+  string group_member_taxnumber = 2;
+  // A számla kiállítójának vagy vevőjének keresőparamétere szó eleji
+  // egyezőségre (a keresési feltétel az invoiceDirection tag értékétől függ)
+  string name = 3;
+  // A számla típusa
+  invoice_base.InvoiceCategoryType invoice_category = 4;
+  // Fizetés módja
+  invoice_base.PaymentMethodType payment_method = 5;
+  // A számla megjelenési formája
+  invoice_base.InvoiceAppearanceType invoice_appearance = 6;
+  // Az adatszolgáltatás forrása
+  SourceType source = 7;
+  // A számla pénzneme
+  string currency = 8;
+}
+
+message AnnulmentDataType {
+
+  // Technikai érvénytelenítő kérések jóváhagyási státusza
+  AnnulmentVerificationStatusType annulment_verification_status = 1;
+  //   A technikai érvénytelenítés jóváhagyásának vagy elutasításának időpontja
+  //   UTC időben
+  int64 annulment_decision_date = 2;
+  //   A technikai érvénytelenítést jóváhagyó vagy elutasító felhasználó neve
+  string annulment_decision_user = 3;
+}
+// A kéréshez tartozó kötegelt technikai érvénytelenítések
+message AnnulmentOperationListType {
+  repeated AnnulmentOperationType annulment_operation = 1;
+}
+// A kéréshez tartozó technikai érvénytelenítő művelet
+message AnnulmentOperationType {
+  // A technikai érvénytelenítés sorszáma a kérésen belül
+  int32 index = 1;
+  // A kért technikai érvénytelenítés művelet típusa
+  ManageAnnulmentOperationType annulment_operation = 2;
+  //   Technikai érvénytelenítés adatok BASE64-ben kódolt tartalma
+  bytes invoice_annulment = 3;
+}
+// A számla audit adatai
+message AuditDataType {
+  // A beszúrás időpontja UTC időben
+  int64 insdate = 1;
+  // A beszúrást végző technikai felhasználó
+  string ins_cus_user = 2;
+  // Az adatszolgáltatás forrása
+  SourceType source = 3;
+  // A számla tranzakció azonosítója, ha az gépi interfészen került beküldésre
+  string transaction_id = 4;
+  // A számla sorszáma a kérésen belül
+  int32 index = 5;
+  // A módosító okirat sorszáma a kötegen belül
+  int32 batch_index = 6;
+  // Az adatszolgáltatás requestVersion értéke
+  string original_request_version = 7;
+}
+// Online Számla rendszerre specifikus általános kérés adatok
+message BasicOnlineInvoiceRequestType {
+  common.BasicRequestType root = 1;
+  SoftwareType software = 2; // A számlázóprogram adatai
+}
+// Online Számla rendszerre specifikus általános válasz adatok
+message BasicOnlineInvoiceResponseType {
+  common.BasicResponseType root = 1;
+  SoftwareType software = 2; // A számlázóprogram adatai
+}
+// Üzleti validációs választípus
+message BusinessValidationResultType {
+  // Validációs eredmény
+  common.BusinessResultCodeType validation_result_code = 1;
+  // Validációs hibakód
+  string validation_error_code = 2;
+  // Feldolgozási üzenet
+  string message = 3;
+  // Feldolgozási kurzor adatok
+  PointerType pointer = 4;
+}
+//   Dátumos számla kereső paraméter
+message DateIntervalParamType {
+  // Dátum intervallum nagyobb vagy egyenlő paramétere
+  string date_from = 1;
+  //   Dátum intervallum kisebb vagy egyenlő paramétere
+  string date_to = 2;
+}
+// Időpontos számla kereső paraméter
+message DateTimeIntervalParamType {
+  // Időpontos intervallum nagyobb vagy egyenlő paramétere UTC idő szerint
+  string date_time_from = 1;
+  // Időpontos intervallum kisebb vagy egyenlő paramétere UTC idő szerint
+  string date_time_to = 2;
+}
+// Online Számla rendszerre specifikus általános hibaválasz típus
+message GeneralErrorResponseType {
+  //common.GeneralErrorHeaderResponseType root = 1;
+  //begin include common.GeneralErrorHeaderResponseType
+  common.BasicHeaderType header = 1;
+  common.BasicResultType result = 2;
+  //end include common.GeneralErrorHeaderResponseType
+  //   A számlázóprogram adatai
+  SoftwareType software = 3;
+  //   Technikai validációs üzenetek
+  repeated common.TechnicalValidationResultType technical_validation_messages =
+      4;
+}
+// Számlalánc kivonat lekérdezés eredményei
+message InvoiceChainDigestResultType {
+  // A jelenleg lekérdezett lapszám
+  int32 current_page = 1;
+  // A lekérdezés eredménye szerint elérhető utolsó lapszám
+  int32 available_page = 2;
+  // Számlalánc elem
+  InvoiceChainElementType invoice_chain_element = 3;
+}
+// Számlalánc kivonat adatok
+message InvoiceChainDigestType {
+  // Számla vagy módosító okirat sorszáma - ÁFA tv. 169. § b) vagy 170. § (1)
+  // bek. b) pont
+  string invoice_number = 1;
+  //   A módosító okirat sorszáma a kötegen belül
+  int32 batch_index = 2;
+  //   Számlaművelet típus
+  ManageInvoiceOperationType invoice_operation = 3;
+  //   A kibocsátó adószáma
+  string supplier_tax_number = 4;
+  //   A vevő adószáma
+  string customer_tax_number = 5;
+  //   A beszúrás időpontja UTC időben
+  int64 ins_date = 6;
+  //   Az adatszolgáltatás requestVersion értéke
+  string original_request_version = 7;
+}
+// Számlalánc elem
+message InvoiceChainElementType {
+  // Számlalánc kivonat adatok
+  InvoiceChainDigestType invoice_chain_digest = 1;
+  // A számlán vagy módosító okiraton szereplő tételek kivonatos adatai
+  InvoiceLinesType invoice_lines = 2;
+  // A módosítás vagy érvénytelenítés adatai
+  InvoiceReferenceDataType invoice_reference_data = 3;
+}
+//   Számlalánc kivonat lekérdezés számlaszám paramétere
+message InvoiceChainQueryType {
+  // Számla vagy módosító okirat sorszáma
+  string invoice_number = 1;
+  // Kimenő vagy bejövő számla keresési paramétere
+  InvoiceDirectionType invoice_direction = 2;
+  // A számla kiállítójának vagy vevőjének adószáma (a keresési feltétel az
+  // invoiceDirection tag értékétől függ)
+  string tax_number = 3;
+}
+// Számlaszámra történő lekérdezés eredménye
+message InvoiceDataResultType {
+  // Számla adatok BASE64-ben kódolt tartalma
+  bytes invoice_data = 1;
+  // A számla audit adatai
+  AuditDataType audit_data = 2;
+  // Jelöli, ha az invoice tartalmát a BASE64 dekódolást követően még ki kell
+  // tömöríteni az olvasáshoz
+  bool compressed_content_indicator = 3;
+  // Elektronikus számla vagy módosító okirat állomány hash lenyomata
+  string electronic_invoice_hash = 4;
+}
+// Számla lekérdezési eredmények
+message InvoiceDigestResultType {
+  // A jelenleg lekérdezett lapszám
+  int32 current_page = 1;
+  // A lekérdezés eredménye szerint elérhető utolsó lapszám
+  int32 available_page = 2;
+  // Számla kivonat lekérdezési eredmény
+  repeated InvoiceDigestType invoice_digest = 3;
+}
+// Kivonatos lekérdezési eredmény
+message InvoiceDigestType {
+  // Számla vagy módosító okirat sorszáma - ÁFA tv. 169. § b) vagy 170. § (1)
+  // bek. b) pont
+  string invoice_number = 1;
+  // A módosító okirat sorszáma a kötegen belül
+  int32 batch_index = 2;
+  // Számlaművelet típus
+  ManageInvoiceOperationType invoice_operation = 3;
+  // A számla típusa
+  invoice_base.InvoiceCategoryType invoice_category = 4;
+  // Számla vagy módosító okirat kiállításának dátuma
+  int32 invoice_issue_date = 5;
+  // A kibocsátó adószáma
+  string supplier_tax_number = 6;
+  // A kibocsátó csoporttag száma
+  string supplier_group_member_tax_number = 7;
+  // Az eladó (szállító) neve
+  string supplier_name = 8;
+  // A vevő adószáma
+  string customer_tax_number = 9;
+  // A vevő csoporttag száma
+  string customer_group_member_tax_number = 10;
+  // A vevő neve
+  string customer_name = 11;
+  invoice_base.PaymentMethodType payment_method = 12;
+  int32 payment_date = 13;
+  // A számla megjelenési formája
+  invoice_base.InvoiceAppearanceType invoice_appearance = 14;
+  // Az adatszolgáltatás forrása
+  SourceType source = 15;
+  // Számla teljesítési dátuma
+  int32 invoice_delivery_date = 16;
+  // A számla pénzneme
+  string currency = 17;
+  // A számla nettó összege a számla pénznemében
+  double invoice_net_amount = 18;
+  // A számla nettó összege forintban
+  double invoice_net_amount_h_u_f = 19;
+  double invoice_vat_amount = 20;
+  double invoice_vat_amount_h_u_f = 21;
+  // Az adatszolgáltatás tranzakció azonosítója
+  string transaction_id = 22;
+  // A számla sorszáma a kérésen belül
+  int32 index = 23;
+  // Az eredeti számla sorszáma, melyre a módosítás vonatkozik
+  string original_invoice_number = 24;
+  // A számlára vonatkozó módosító okirat egyedi sorszáma
+  int32 modification_index = 25;
+  // A beszúrás időpontja UTC időben
+  int64 ins_date = 26;
+  // Jelöli, ha az adatszolgáltatás maga a számla (a számlán nem szerepel több
+  // adat)
+  bool completeness_indicator = 27;
+}
+// A számlán vagy módosító okiraton szereplő tételek kivonatos adatai
+message InvoiceLinesType {
+  // A sorok száma közül a legmagasabb, amit a számla tartalmaz
+  int64 max_line_number = 1;
+  // A módosító okirat által újként létrehozott számlasorok
+  repeated NewCreatedLinesType new_created_lines = 2;
+}
+// Számla lekérdezés számlaszám paramétere
+message InvoiceNumberQueryType {
+  // Számla vagy módosító okirat sorszáma
+  string invoice_number = 1;
+  // Kimenő vagy bejövő számla keresési paramétere
+  InvoiceDirectionType invoice_direction = 2;
+  // A módosító okirat sorszáma a kötegen belül
+  int32 batch_index = 3;
+  // Vevő oldali lekérdezés esetén a számla kiállítójának adószáma, ha több
+  // érvényes számla is megtalálható azonos sorszámmal
+  string supplier_tax_number = 4;
+}
+// A kéréshez tartozó kötegelt számlaműveletek
+message InvoiceOperationListType {
+  bool compressed_content = 1;
+  // A kéréshez tartozó számlaművelet
+  repeated InvoiceOperationType invoice_operation = 2;
+}
+// A kéréshez tartozó számlaművelet
+message InvoiceOperationType {
+  // A számla sorszáma a kérésen belül
+  int32 index = 1;
+  //   A kért számla művelet típusa
+  ManageInvoiceOperationType invoice_operation = 2;
+  //   Számla adatok BASE64-ben kódolt tartalma
+  bytes invoice_data = 3;
+  //   Elektronikus számla vagy módosító okirat állomány hash lenyomata
+  string electronic_invoice_hash = 4;
+}
+// Számla lekérdezési paraméterek
+message InvoiceQueryParamsType {
+  // A számla lekérdezés kötelező paraméterei
+  MandatoryQueryParamsType mandatory_query_params = 1;
+  // A számla lekérdezés kiegészítő paraméterei
+  AdditionalQueryParamsType additional_query_params = 2;
+  // A számla lekérdezés relációs paraméterei
+  RelationalQueryParamsType relational_query_params = 3;
+  // A számla lekérdezés tranzakciós paraméterei
+  TransactionQueryParamsType transaction_query_params = 4;
+}
+// A módosítás vagy érvénytelenítés adatai
+message InvoiceReferenceDataType {
+  // Az eredeti számla sorszáma, melyre a módosítás vonatkozik  - ÁFA tv. 170. §
+  // (1) c)
+  string original_invoice_number = 1;
+  //   Annak jelzése, hogy a módosítás olyan alapszámlára hivatkozik, amelyről
+  //   nem történt és nem is fog történni adatszolgáltatás
+  bool modify_without_master = 2;
+  //   A módosító okirat készítésének időbélyege a forrásrendszerben UTC időben
+  int64 modification_timestamp = 3;
+  //   A számlára vonatkozó módosító okirat egyedi sorszáma
+  int32 modification_index = 4;
+}
+// A POST /manageAnnulment REST operáció kérés típusa
+message ManageAnnulmentRequestType {
+  BasicOnlineInvoiceRequestType root = 1;
+  // A tranzakcióhoz kiadott egyedi és dekódolt token
+  string exchange_token = 2;
+  //   A kéréshez tartozó kötegelt technikai érvénytelenítések
+  AnnulmentOperationListType annulment_operations = 3;
+}
+// A POST /manageInvoice REST operáció kérés típusa
+message ManageInvoiceRequestType {
+  BasicOnlineInvoiceRequestType root = 1;
+  // A tranzakcióhoz kiadott egyedi és dekódolt token
+  string exchange_token = 2;
+  // A kéréshez tartozó kötegelt számlaműveletek
+  InvoiceOperationListType invoice_operations = 3;
+}
+//   A számla lekérdezés kötelező paraméterei
+message MandatoryQueryParamsType {
+  // Számla kiállításának dátumtartománya
+  DateIntervalParamType invoice_issue_date = 1;
+  // Számla adatszolgáltatás feldolgozásának időpont tartománya UTC idő szerint
+  DateTimeIntervalParamType ins_date = 2;
+  // Az eredeti számla sorszáma, melyre a módosítás vonatkozik
+  string original_invoice_number = 3;
+}
+// A módosító okirat által újként létrehozott számlasorok
+message NewCreatedLinesType {
+  // Számla sor intervallum kezdete
+  int64 line_number_interval_start = 1;
+  //   Számla sor intervallum vége (inkluzív)
+  int64 line_number_interval_end = 2;
+}
+// Feldolgozási kurzor adatok
+message PointerType {
+  // Tag hivatkozás
+  string tag = 1;
+  // Érték hivatkozás
+  string value = 2;
+  // Sorhivatkozás
+  int64 line = 3;
+  // Kötegelt számla művelet esetén az eredeti számla sorszáma, melyre a
+  // módosítás vonatkozik
+  string original_invoice_number = 4;
+}
+// A kéréshez tartozó feldolgozási eredmények
+message ProcessingResultListType {
+  // Számla feldolgozási eredmény
+  repeated ProcessingResultType processing_result = 1;
+  // Az adatszolgáltatás requestVersion értéke
+  string original_request_version = 2;
+  // Technikai érvénytelenítés státusz adatai
+  AnnulmentDataType annulment_data = 3;
+}
+// Számla feldolgozási eredmény
+message ProcessingResultType {
+  // A számla feldolgozási státusza
+  enum InvoiceStatusType {
+    UNKNOWN = 0;
+    // Befogadva
+    RECEIVED = 1;
+    // Feldolgozás alatt
+    PROCESSING = 2;
+    // Elmentve
+    SAVED = 3;
+    // Kész
+    DONE = 4;
+    // Kihagyva
+    ABORTED = 5;
+  }
+  //   A számla sorszáma a kérésen belül
+  int32 index = 1;
+  //   A módosító okirat sorszáma a kötegen belül
+  int32 batch_index = 2;
+  //   A számla feldolgozási státusza
+  InvoiceStatusType invoice_status = 3;
+  repeated common.TechnicalValidationResultType technical_validation_messages =
+      4;
+  //   Technikai validációs üzenetek
+  repeated BusinessValidationResultType business_validation_messages = 5;
+  //   Jelöli, ha az originalRequest tartalmát a BASE64 dekódolást követően még
+  //   ki kell tömöríteni az olvasáshoz
+  bool compressed_content_indicator = 6;
+  //   Számla adatok BASE64-ben kódolt tartalma
+  bytes original_request = 7;
+}
+// A POST /queryInvoiceChainDigest REST operáció kérés típusa
+message QueryInvoiceChainDigestRequestType {
+  BasicOnlineInvoiceRequestType root = 1;
+  //   A lekérdezni kívánt lap száma
+  int32 page = 2;
+  //   Számlalánc kivonat lekérdezés számlaszám paramétere
+  InvoiceChainQueryType invoice_chain_query = 3;
+}
+// A POST /queryInvoiceChainDigest REST operáció válasz típusa
+message QueryInvoiceChainDigestResponseType {
+  BasicOnlineInvoiceResponseType root = 1;
+  // Számlalánc kivonat lekérdezés eredményei
+  InvoiceChainDigestResultType invoice_chain_digest_result = 2;
+}
+// A POST /queryInvoiceCheck REST operáció válasz típusa
+message QueryInvoiceCheckResponseType {
+  BasicOnlineInvoiceResponseType root = 1;
+  //   Jelöli, ha a lekérdezett számlaszám érvényesként szerepel a rendszerben
+  //   és a lekérdező adószáma kiállítóként vagy eladóként szerepel a számlán
+  bool invoice_check_result = 2;
+}
+// A POST /queryInvoiceData REST operáció kérés típusa
+message QueryInvoiceDataRequestType {
+  BasicOnlineInvoiceRequestType root = 1;
+  // Számla lekérdezés számlaszám paramétere
+  InvoiceNumberQueryType invoice_number_query = 2;
+}
+message QueryInvoiceDataResponseType {
+  // A POST /queryInvoiceData REST operáció válasz típusa
+  BasicOnlineInvoiceResponseType root = 1;
+  //   A számla lekérdezés eredménye
+  InvoiceDataResultType invoice_data_result = 2;
+}
+// A POST /queryInvoiceDigest REST operáció kérés típusa
+message QueryInvoiceDigestRequestType {
+  BasicOnlineInvoiceRequestType root = 1;
+  // A lekérdezni kívánt lap száma
+  int32 page = 2;
+  // Kimenő vagy bejövő számla keresési paramétere
+  InvoiceDirectionType invoice_direction = 3;
+  // Inbound or outbound invoice query parameter
+  InvoiceQueryParamsType invoice_query_params = 4;
+}
+// A POST /queryInvoiceDigest REST operáció válasz típusa
+message QueryInvoiceDigestResponseType {
+  BasicOnlineInvoiceResponseType root = 1;
+  //   A számla kivonat lekérdezés eredményei
+  InvoiceDigestResultType invoice_digest_result = 2;
+}
+// A POST /queryTaxpayer REST operáció kérés típusa
+message QueryTaxpayerRequestType {
+  BasicOnlineInvoiceRequestType root = 1;
+  string tax_number = 2;
+}
+//   A POST /queryTaxpayer REST operáció válasz típusa
+message QueryTaxpayerResponseType {
+  BasicOnlineInvoiceResponseType root = 1;
+  //   Az adatok utolsó változásának időpontja
+  int64 info_date = 2;
+  //   Jelzi, hogy a lekérdezett adózó létezik és érvényes-e
+  bool taxpayer_validity = 3;
+  //   Az adózó lekérdezés válasz adatai
+  TaxpayerDataType taxpayer_data = 4;
+}
+// A POST /queryTransactionList REST operáció kérés típusa
+message QueryTransactionListRequestType {
+  BasicOnlineInvoiceRequestType root = 1;
+  //   A lekérdezni kívánt lap száma
+  int32 page = 2;
+  //   A lekérdezni kívánt tranzakciók kiadásának szerver oldali ideje UTC
+  //   időben
+  DateTimeIntervalParamType ins_date = 3;
+  //   A kérés feldolgozási státusza
+  RequestStatusType request_status = 4;
+}
+// A POST /queryTransactionList REST operáció válasz típusa
+message QueryTransactionListResponseType {
+  BasicOnlineInvoiceResponseType root = 1;
+  //   Tranzakció lekérdezési eredménye
+  TransactionListResultType transaction_list_result = 2;
+}
+// A POST /queryTransactionStatus REST operáció kérés típusa
+message QueryTransactionStatusRequestType {
+  BasicOnlineInvoiceRequestType root = 1;
+  //   Az adatszolgáltatás tranzakció azonosítója
+  string transaction_id = 2;
+  //   Jelöli, ha a kliens által beküldött eredeti tartalmat is vissza kell adni
+  //   a válaszban
+  bool return_original_request = 3;
+}
+// A POST /queryTransactionStatus REST operáció válasz típusa
+message QueryTransactionStatusResponseType {
+  //BasicOnlineInvoiceResponseType root = 1;
+  //begin include BasicOnlineInvoiceResponseType
+  common.BasicHeaderType header = 1;
+  common.BasicResultType result = 2;
+  SoftwareType software = 3; // A számlázóprogram adatai
+  //end include BasicOnlineInvoiceResponseType
+  //   A kérésben szereplő számlák feldolgozási státusza</xs:documentation>
+  ProcessingResultListType processing_results = 4;
+}
+// A számla lekérdezés relációs paraméterei
+message RelationalQueryParamsType {
+  // Számla teljesítési dátumának kereső paramétere
+  repeated RelationQueryDateType invoice_delivery = 1;
+  //   A számla fizetési határidejének kereső paramétere
+  repeated RelationQueryDateType payment_date = 2;
+  //   A számla nettó összeg kereső paramétere a számla pénznemében
+  repeated RelationQueryMonetaryType invoice_net_amount = 3;
+  //   A számla nettó összegének kereső paramétere forintban
+  repeated RelationQueryMonetaryType invoice_net_amount_h_u_f = 4;
+  //   A számla ÁFA összegének kereső paramétere a számla pénznemében
+  repeated RelationQueryMonetaryType invoice_vat_amount = 5;
+  //   A számla ÁFA összegének kereső paramétere forintban
+  repeated RelationQueryMonetaryType invoice_vat_amount_h_u_f = 6;
+}
+// Kereső paraméter dátum értékekhez
+message RelationQueryDateType {
+  // Kereső operátor
+  QueryOperatorType query_operator = 1;
+  //   Kereső érték
+  // <xs:minInclusive value="2010-01-01"/>
+  // <xs:pattern value="\d{4}-\d{2}-\d{2}"/>
+  string query_value = 2;
+}
+// Kereső paraméter monetáris értékekhez
+message RelationQueryMonetaryType {
+  // Kereső operátor
+  QueryOperatorType query_operator = 1;
+  //   Kereső érték
+  double query_value = 2;
+}
+// A számlázóprogram adatai
+message SoftwareType {
+  string software_id = 1;
+  string software_name = 2;
+  SoftwareOperationType software_operation = 3;
+  string software_main_version = 4;
+  string software_dev_name = 5;
+  string software_dev_contact = 6;
+  string software_dev_country_code = 7;
+  string software_dev_tax_number = 8;
+}
+// Adózói címsor adat
+message TaxpayerAddressItemType {
+  TaxpayerAddressTypeType taxpayer_address_type = 1;
+  invoice_base.DetailedAddressType taxpayer_address = 2;
+}
+// Adózói cím lista típus
+message TaxpayerAddressListType {
+  repeated TaxpayerAddressItemType taxpayer_address_item = 1;
+}
+// Az adózó lekérdezés válasz adatai
+message TaxpayerDataType {
+  //   Az adózó neve
+  string taxpayer_name = 1;
+  //   Az adózó rövidített neve
+  string taxpayer_short_name = 2;
+  //   Az adószám részletes adatai
+  invoice_base.TaxNumberType tax_number_detail = 3;
+  //   Gazdasági típus
+  IncorporationType incorporation = 4;
+  //   Az adózó ÁFA csoport tagsága
+  string vat_group_membership = 5;
+  //   Adózói cím lista típus
+  TaxpayerAddressListType taxpayer_address_list = 6;
+}
+// A POST /tokenExchange REST operáció válasz típusa
+message TokenExchangeResponseType {
+  //BasicOnlineInvoiceResponseType root = 1;
+  //begin include BasicOnlineInvoiceResponseType 
+  common.BasicHeaderType header = 1;
+  common.BasicResultType result = 2;
+  SoftwareType software = 3; // A számlázóprogram adatai
+  //end  include BasicOnlineInvoiceResponseType 
+  //   A kiadott exchange token AES-128 ECB algoritmussal kódolt alakja
+  string encoded_exchange_token = 4;
+  //   A kiadott token érvényességének kezdete
+  int64 token_validity_from = 5;
+  //   A kiadott token érvényességének vége
+  int64 token_validity_to = 6;
+}
+// Tranzakció lekérdezési eredményei
+message TransactionListResultType {
+  // A jelenleg lekérdezett lapszám
+  int32 current_page = 1;
+  //   A lekérdezés eredménye szerint elérhető utolsó lapszám
+  int32 available_page = 2;
+  //   Tranzakció lekérdezési eredmény
+  repeated TransactionType transaction = 3;
+}
+// A számla lekérdezés tranzakciós paraméterei
+message TransactionQueryParamsType {
+  string transaction_id = 1;
+  //   A számla sorszáma a kérésen belül
+  int32 index = 2;
+  //   Számlaművelet típus
+  ManageInvoiceOperationType invoice_operation = 3;
+}
+// A POST /manageInvoice és a POST /manageAnnulment REST operáció közös válasz
+// típusa
+message TransactionResponseType {
+  //BasicOnlineInvoiceResponseType root = 1;
+  //begin include BasicOnlineInvoiceResponseType
+  common.BasicHeaderType header = 1;
+  common.BasicResultType result = 2;
+  SoftwareType software = 3;
+  //end include BasicOnlineInvoiceResponseType
+  //   A kért operáció tranzakció azonosítója
+  string transaction_id = 4;
+}
+// Tranzakció lekérdezési eredmény
+message TransactionType {
+  //   A beszúrás időpontja UTC időben
+  int64 ins_date = 1;
+  //   A beszúrást végző felhasználó
+  string ins_cus_user = 2;
+  //   Az adatszolgáltatás forrása
+  SourceType source = 3;
+  //   A számla tranzakció azonosítója
+  string transaction_id = 4;
+  //   A kérés feldolgozási státusza
+  RequestStatusType request_status = 5;
+  //   Jelöli ha a tranzakció technikai érvénytelenítést tartalmaz
+  bool technical_annulment = 6;
+  //   Az adatszolgáltatás requestVersion értéke
+  string original_request_version = 7;
+  //   Az adatszolgáltatás tételeinek száma
+  int32 item_count = 8;
+}
+// Online Számla rendszerre specifikus általános hibaválasz
+message GeneralErrorResponse { GeneralErrorResponseType root = 1; }
+// A POST /manageAnnulment REST operáció kérésének root elementje
+message ManageAnnulmentRequest { ManageAnnulmentRequestType root = 1; }
+// A POST /manageAnnulment REST operáció válaszának root elementje
+message ManageAnnulmentResponse { TransactionResponseType root = 1; }
+// A POST /manageInvoice REST operáció kérésének root elementje
+message ManageInvoiceRequest { ManageInvoiceRequestType root = 1; }
+// A POST /manageInvoice REST operáció válaszának root elementje
+message ManageInvoiceResponse { TransactionResponseType root = 1; }
+// A POST /queryInvoiceChainDigest REST operáció kérésének root elementje
+message QueryInvoiceChainDigestRequest {
+  QueryInvoiceChainDigestRequestType root = 1;
+}
+// A POST /queryInvoiceChainDigest REST operáció válaszának root elementje
+message QueryInvoiceChainDigestResponse {
+  QueryInvoiceChainDigestResponseType root = 1;
+}
+// A POST /queryInvoiceCheck REST operáció kérésének root elementje
+message QueryInvoiceCheckRequest { QueryInvoiceDataRequestType root = 1; }
+// A POST /queryInvoiceCheck REST operáció válaszának root elementje
+message QueryInvoiceCheckResponse { QueryInvoiceCheckResponseType root = 1; }
+// A POST /queryInvoiceData REST operáció kérésének root elementje
+message QueryInvoiceDataRequest { QueryInvoiceDataRequestType root = 1; }
+// A POST /queryInvoiceData REST operáció válaszának root elementje
+message QueryInvoiceDataResponse { QueryInvoiceDataResponseType root = 1; }
+// A POST /queryInvoiceDigest REST operáció válaszának root elementje
+message QueryInvoiceDigestRequest { QueryInvoiceDigestRequestType root = 1; }
+// A POST /queryInvoiceDigest REST operáció válaszának root elementje
+message QueryInvoiceDigestResponse { QueryInvoiceDigestResponseType root = 1; }
+// A POST /queryTaxpayer REST operáció kérésének root elementje
+message QueryTaxpayerRequest { QueryTaxpayerRequestType root = 1; }
+// A POST /queryTaxpayer REST operáció válaszának root elementje
+message QueryTaxpayerResponse { QueryTaxpayerResponseType root = 1; }
+// A POST /queryTransactionList REST operáció kérésének root elementje
+message QueryTransactionListRequest {
+  QueryTransactionListRequestType root = 1;
+}
+// A POST /queryTransactionList REST operáció válaszának root elementje
+message QueryTransactionListResponse {
+  QueryTransactionListResponseType root = 1;
+}
+// A POST /queryTransactionStatus REST operáció kérésének root elementje
+message QueryTransactionStatusRequest {
+  QueryTransactionStatusRequestType root = 1;
+}
+// A POST /queryTransactionStatus REST operáció válaszának root elementje
+message QueryTransactionStatusResponse {
+  QueryTransactionStatusResponseType root = 1;
+}
+// A POST /tokenExchange REST operáció kérésének root elementje
+message TokenExchangeRequest { BasicOnlineInvoiceRequestType root = 1; }
+// A POST /tokenExchange REST operáció válaszának root elementje
+message TokenExchangeResponse { TokenExchangeResponseType root = 1; }

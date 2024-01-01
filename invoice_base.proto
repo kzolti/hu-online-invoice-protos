@@ -1,0 +1,56 @@
+syntax = "proto3";
+package invoice_base;
+
+//Számla megjelenési formája típus
+enum InvoiceAppearanceType {
+  UNKNOWN = 0;
+  PAPER = 1;
+  ELECTRONIC = 2;
+  EDI = 3;
+}
+enum InvoiceCategoryType {
+  UNKNOWN_INVOICE_CATEGORY_TYPE = 0;
+  NORMAL = 1;
+  SIMPLIFIED = 2;
+  AGGREGATE = 3;
+}
+enum PaymentMethodType {
+  UNKNOWN_PAYMENT_METHOD_TYPE = 0;
+  TRANSFER = 1;
+  CASH = 2;
+  CARD = 3;
+  VOUCHER = 4;
+  OTHER = 5;
+}
+message DetailedAddressType {
+  string country_code = 1;
+  string region = 2;
+  string postal_code = 3;
+  string city = 4;
+  string street_name = 5;
+  string public_place_category = 6;
+  string number = 7;
+  string building = 8;
+  string staircase = 9;
+  string floor = 10;
+  string door = 11;
+  string lot_number = 12;
+}
+
+message SimpleAddressType {
+  string country_code = 1;
+  string region = 2;
+  string postal_code = 3;
+  string city = 4;
+  string additional_address_detail = 5;
+}
+
+message TaxNumberType {
+  string taxpayer_id = 2;
+  string vat_code = 3;
+  string county_code = 1;
+}
+message AddressType {
+  DetailedAddressType detailed_address = 1;
+  SimpleAddressType simple_address = 2;
+}
