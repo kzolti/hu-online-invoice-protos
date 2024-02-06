@@ -305,29 +305,29 @@ message GlnNumbersType {
 }
 // Számla részletező adatok
 message InvoiceDetailType {
-  //   enum InvoiceCategoryType {
-  //     UNKOWN_INVOICE_CATEGORY_TYPE = 0;
-  //     NORMAL = 1;     // Normál (nem egyszerűsített és nem gyűjtő) számla
-  //     SIMPLIFIED = 2; // Egyszerűsített számla
-  //     AGGREGATE = 3;  // Gyűjtőszámla
-  //   }
-  //   enum PaymentMethod {
-  //     UNKOWN_PAYMENT_METHOD = 0;
-  //     TRANSFER = 1; // Banki átutalás
-  //     CASH = 2;     // Készpénz
-  //     CARD = 3;     // Bankkártya, hitelkártya, egyéb készpénz helyettesítő
-  //                   // eszköz
-  //     VOUCHER = 4;  // Utalvány, váltó, egyéb pénzhelyettesítő eszköz
-  //     OTHER = 5;    // Egyéb
-  //   }
-  //   enum InvoiceAppearanceType {
-  //     UNKNOWN_INVOICE_APPEARANCE_TYPE = 0;
-  //     PAPER = 1;      // Papír alapú számla
-  //     ELECTRONIC = 2; // Elektronikus formában előállított, nem EDI számla
-  //     EDI = 3;        // EDI számla
-  //     // A szoftver nem képes azonosítani vagy a kiállításkor nem ismert
-  //     UNKNOWN = 4;
-  //   }
+ enum InvoiceCategoryType {
+   UNKOWN_INVOICE_CATEGORY_TYPE = 0;
+   NORMAL = 1;     // Normál (nem egyszerűsített és nem gyűjtő) számla
+   SIMPLIFIED = 2; // Egyszerűsített számla
+   AGGREGATE = 3;  // Gyűjtőszámla
+ }
+ enum PaymentMethod {
+   UNKOWN_PAYMENT_METHOD = 0;
+   TRANSFER = 1; // Banki átutalás
+   CASH = 2;     // Készpénz
+   CARD = 3;     // Bankkártya, hitelkártya, egyéb készpénz helyettesítő
+                 // eszköz
+   VOUCHER = 4;  // Utalvány, váltó, egyéb pénzhelyettesítő eszköz
+   OTHER = 5;    // Egyéb
+ }
+ enum InvoiceAppearanceType {
+   UNKNOWN_INVOICE_APPEARANCE_TYPE = 0;
+   PAPER = 1;      // Papír alapú számla
+   ELECTRONIC = 2; // Elektronikus formában előállított, nem EDI számla
+   EDI = 3;        // EDI számla
+   // A szoftver nem képes azonosítani vagy a kiállításkor nem ismert
+   UNKNOWN = 4;
+ }
 
   // A számla típusa, módosító okirat esetén az eredeti számla típusa
   invoice_base.InvoiceCategoryType invoice_category = 1;
